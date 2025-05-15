@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZWILLING Web Portal</title>
+    <style>
+        /* TEMEL AYARLAR ve APP-CONTAINER Stilleri */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- GİRİŞ EKRANI STİLLERİ --- */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100vh;
+            background-color: #e9ecef; 
+        }
+        .login-box {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-logo {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+        .login-box h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #343a40;
+        }
+        .login-box label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        .login-box input[type="text"],
+        .login-box input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        .login-error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .login-info {
+            margin-top: 20px;
+            font-size: 0.85em;
+            color: #6c757d;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .login-info p { margin: 5px 0; }
+        .login-info code { background-color: #f1f1f1; padding: 2px 4px; border-radius: 3px; }
+
+        /* --- ANA UYGULAMA STİLLERİ (APP-CONTAINER) --- */
+        .app-container { display: flex; width: 100%; }
+
+        /* SOL MENÜ (SIDEBAR) */
+        .sidebar {
+            width: 260px; background-color: #343a40; color: #adb5bd; padding-top: 10px;
+            transition: width 0.3s ease; height: 100vh; overflow-y: auto;
+            position: fixed; left:0; top:0; z-index: 100;
+        }
+        .sidebar.collapsed { width: 60px; }
+        .sidebar.collapsed .sidebar-header h3,
+        .sidebar.collapsed .nav-item span:not(.icon),
+        .sidebar.collapsed .nav-item .arrow { display: none; }
+        .sidebar.collapsed .nav-item .icon { margin-right: 0; font-size: 1.2em; }
+        .sidebar.collapsed .submenu { display: none !important; }
+
+        .sidebar-header { padding: 15px; text-align: center; border-bottom: 1px solid #495057; }
+        .sidebar-header h3 { color: #fff; margin: 0; font-size: 1.4em; }
+
+        .sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar-nav .nav-item {
+            display: flex; align-items: center; padding: 12px 20px; color: #adb5bd;
+            text-decoration: none; transition: background-color 0.2s ease, color 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-nav .nav-item:hover,
+        .sidebar-nav .nav-item.active-item {
+            background-color: #495057; color: #fff; border-left-color: #E3000F;
+        }
+        .sidebar-nav .nav-item .icon { margin-right: 10px; width: 20px; text-align: center; }
+        .sidebar-nav .nav-item .icon-placeholder { display: inline-block; width: 20px; margin-right: 10px; }
+        .sidebar-nav .nav-item .arrow { margin-left: auto; font-size: 0.8em; transition: transform 0.2s ease; }
+        .sidebar-nav .nav-item.has-submenu.open .down-arrow { transform: rotate(0deg); }
+        .sidebar-nav .nav-item.has-submenu .down-arrow { transform: rotate(-90deg); } /* Default to right arrow visually for closed */
+
+        .submenu {
+            list-style: none; padding-left: 0; background-color: #2c3034; display: none;
+        }
+        .submenu .sub-item { padding-left: 40px; font-size: 0.95em; }
+        .submenu .sub-item:hover,
+        .submenu .sub-item.active-item { background-color: #495057; color: #fff; border-left-color: #E3000F; }
+
+        /* ANA İÇERİK ALANI WRAPPER */
+        .main-content-wrapper {
+            flex-grow: 1; display: flex; flex-direction: column;
+            margin-left: 260px; transition: margin-left 0.3s ease; width: calc(100% - 260px);
+        }
+        .sidebar.collapsed ~ .main-content-wrapper { margin-left: 60px; width: calc(100% - 60px); }
+
+        /* ÜST BAŞLIK (HEADER) */
+        .app-header {
+            background-color: #ffffff; padding: 0 20px; height: 60px; display: flex;
+            align-items: center; border-bottom: 1px solid #dee2e6;
+            position: sticky; top: 0; z-index: 90;
+        }
+        .header-left { display: flex; align-items: center; }
+        #toggleSidebarButton { font-size: 1.5em; margin-right: 15px; }
+        .icon-button { background: none; border: none; cursor: pointer; font-size: 1.3em; color: #495057; padding: 5px; }
+        #headerLogo { height: 35px; }
+        .header-title { margin: 0; font-size: 1.3em; color: #343a40; margin-left: 20px; flex-grow: 1; }
+        .header-right { margin-left: auto; display: flex; align-items: center; }
+        #logoutButton { padding: 8px 12px; }
+
+        /* SAYFA İÇERİĞİ (MAIN) */
+        .page-content { flex-grow: 1; padding: 20px; background-color: #f8f9fa; }
+        .tab-content {
+            display: none; background-color: #ffffff; padding: 20px;
+            border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .tab-content.active { display: block; }
+
+        .dashboard-placeholder { display: flex; gap: 20px; margin-top: 20px; }
+        .chart-placeholder {
+            flex: 1; background-color: #e9ecef; padding: 20px; border-radius: 4px;
+            text-align: center; min-height: 200px; display: flex; align-items: center;
+            justify-content: center; color: #6c757d;
+        }
+
+        /* Form ve Liste Stilleri */
+        .content-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+        }
+        .primary-button {
+            background-color: #E3000F; color: white; border: none; padding: 10px 15px;
+            border-radius: 4px; cursor: pointer; transition: background-color 0.2s;
+        }
+        .primary-button:hover { background-color: #b0000c; }
+        .secondary-button {
+            background-color: #6c757d; color: white; border: none; padding: 8px 12px;
+            border-radius: 4px; cursor: pointer; margin-left: 5px; transition: background-color 0.2s;
+        }
+        .secondary-button:hover { background-color: #5a6268; }
+        .action-button {
+            padding: 5px 10px; margin-right: 5px; border-radius: 3px;
+            cursor: pointer; border: 1px solid transparent; color: white;
+        }
+        .approve-button { background-color: #28a745; }
+        .reject-button { background-color: #dc3545; }
+        .update-button { background-color: #ffc107; color: black; }
+        .cancel-list-button { background-color: #17a2b8; }
+
+        .filter-section {
+            margin-bottom: 20px; padding: 15px; background-color: #f9f9f9;
+            border: 1px solid #ddd; border-radius: 4px;
+        }
+        .filter-section h3 { margin-top: 0; }
+        .filter-section form div { margin-bottom: 10px; display: inline-block; margin-right: 15px; }
+        .filter-section label { margin-right: 5px; font-weight: bold; }
+        .filter-section input[type="date"],
+        .filter-section input[type="number"],
+        .filter-section select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .list-section table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .list-section th, .list-section td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .list-section th { background-color: #e9ecef; font-weight: bold; }
+        .list-section tbody tr:hover { background-color: #f1f1f1; cursor: pointer; }
+
+        /* Modal Styles */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888;
+            width: 60%; max-width: 700px; border-radius: 5px; position: relative;
+        }
+        .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .close-button {
+            color: #aaa; float: right; font-size: 28px; font-weight: bold;
+        }
+        .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
+        #satinalmaTalepForm div, #talepDetayIcerik p { margin-bottom: 15px; }
+        #satinalmaTalepForm label { display: block; margin-bottom: 5px; font-weight: bold; }
+        #satinalmaTalepForm input[type="text"],
+        #satinalmaTalepForm input[type="date"],
+        #satinalmaTalepForm input[type="number"],
+        #satinalmaTalepForm select,
+        #satinalmaTalepForm textarea {
+            width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box;
+        }
+        #satinalmaTalepForm input[readonly] { background-color: #e9ecef; }
+        #satinalmaTalepForm textarea { resize: vertical; min-height: 80px; }
+        .modal-buttons { text-align: right; margin-top: 20px; }
+        #yuklenenDosyalarListesi, #detayDokumanlarListesi { list-style-type: disc; padding-left: 20px; }
+        #yuklenenDosyalarListesi li, #detayDokumanlarListesi li { margin-bottom: 5px; }
+        #detayAciklama {
+            white-space: pre-wrap; background-color: #f9f9f9; padding: 10px;
+            border: 1px solid #eee; border-radius: 3px; max-height: 200px; overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginContainer" class="login-container">
+        <div class="login-box">
+            <!-- Logo yolu: Eğer bu HTML dosyası ile aynı klasörde değilse, doğru yolu belirtin -->
+            <img src="zwilling-logo.png" alt="ZWILLING Logo" class="login-logo" onerror="this.style.display='none'">
+            <h2>Portala Giriş</h2>
+            <form id="loginForm">
+                <div>
+                    <label for="username">Kullanıcı Adı:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div>
+                    <label for="password">Şifre:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="primary-button login-button">Giriş Yap</button>
+                <p id="loginError" class="login-error-message" style="display:none;">Kullanıcı adı veya şifre hatalı!</p>
+            </form>
+             <div class="login-info">
+                <p><strong>Test Kullanıcıları:</strong></p>
+                <p>Talep Eden: <code>talepeden</code> / Şifre: <code>123</code></p>
+                <p>Onaylayan: <code>onaylayan</code> / Şifre: <code>123</code></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>ZWILLING PORTAL</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" id="navAnasayfa" class="nav-item" data-section="anasayfaBolumu" data-title="Anasayfa"><span class="icon">🏠</span> Anasayfa</a></li>
+                    <li>
+                        <a href="#" class="nav-item has-submenu" data-section="raporlarBolumu" data-title="Raporlar"><span class="icon">📊</span> Raporlar <span class="arrow right-arrow">›</span></a>
+                         <ul class="submenu">
+                            <li><a href="#" class="nav-item sub-item" data-section="raporlarBolumu" data-title="Örnek Rapor 1"><span class="icon-placeholder"></span> Örnek Rapor 1</a></li>
+                        </ul>
+                    </li>
+                    <li id="satinalmaMenuLi" class="active open">
+                        <a href="#" id="navSatinalmaParent" class="nav-item has-submenu"><span class="icon">🛒</span> Satınalma <span class="arrow down-arrow">▼</span></a>
+                        <ul class="submenu" id="satinalmaSubmenu" style="display:block;">
+                            <li id="menuSatinalmaOnayMevcutLi"><a href="#" id="navSatinalmaOnayMevcut" class="nav-item sub-item" data-section="satinalmaOnayMevcutBolumu" data-title="Satınalma Onay (Mevcut)"><span class="icon-placeholder"></span> Satınalma Onay (Mevcut)</a></li>
+                            <li id="menuSatinalmaTalepFormuLi"><a href="#" id="navSatinalmaTalepFormu" class="nav-item sub-item active-item" data-section="satinalmaTalepFormuBolumu" data-title="Satınalma Talebi Formu"><span class="icon-placeholder"></span> Satınalma Talebi Formu</a></li>
+                            <li id="menuSatinalmaOnayiFormuLi"><a href="#" id="navSatinalmaOnayiFormu" class="nav-item sub-item" data-section="satinalmaOnayFormuBolumu" data-title="Satınalma Onayı Formu"><span class="icon-placeholder"></span> Satınalma Onayı Formu</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="main-content-wrapper">
+            <header class="app-header">
+                <div class="header-left">
+                    <button id="toggleSidebarButton" class="icon-button">☰</button>
+                    <img src="zwilling-logo.png" alt="ZWILLING" id="headerLogo" onerror="this.style.display='none'">
+                </div>
+                <h1 id="pageTitle" class="header-title">Satınalma Talebi Formu</h1>
+                <div class="header-right">
+                    <span id="currentUserDisplay" style="margin-right: 15px; font-size: 0.9em;"></span>
+                    <button id="logoutButton" class="secondary-button">Çıkış Yap</button>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <!-- ANASAYFA İÇERİĞİ (Placeholder) -->
+                <section id="anasayfaBolumu" class="tab-content">
+                    <h2>Anasayfa</h2>
+                    <p>Bu bölüm ana sayfa içeriğini gösterecektir.</p>
+                    <div class="dashboard-placeholder">
+                        <div class="chart-placeholder">2025 Yılı Top 10 Marka Satış Tutarı (Placeholder)</div>
+                        <div class="chart-placeholder">2025 Yılı Top 10 Marka Satış Miktarı (Placeholder)</div>
+                    </div>
+                </section>
+
+                <!-- RAPORLAR İÇERİĞİ (Placeholder) -->
+                <section id="raporlarBolumu" class="tab-content">
+                    <h2>Raporlar</h2>
+                    <p>Bu bölüm rapor içeriklerini gösterecektir. Şimdilik boştur.</p>
+                </section>
+
+                <!-- MEVCUT SATINALMA ONAY İÇERİĞİ (Placeholder) -->
+                <section id="satinalmaOnayMevcutBolumu" class="tab-content">
+                    <h2>Satınalma Onay (Mevcut Sistem)</h2>
+                    <p>Bu bölüm, dokümanda bahsi geçen mevcut "Satınalma Onay" ekranının yerini temsil etmektedir. Bu geliştirme talebi kapsamında değildir.</p>
+                </section>
+
+                <!-- SATINALMA TALEBİ FORMU BÖLÜMÜ -->
+                <section id="satinalmaTalepFormuBolumu" class="tab-content active">
+                    <div class="content-header">
+                        <button id="yeniTalepEkleButton" class="primary-button">YENİ SATIN ALMA TALEBİ EKLE</button>
+                    </div>
+                     <div class="filter-section">
+                        <h3>Filtrele</h3>
+                        <form id="talepFiltreForm">
+                            <div>
+                                <label for="talepTarihiBaslangic">Talep Tarihi Aralığı:</label>
+                                <input type="date" id="talepTarihiBaslangic"> - <input type="date" id="talepTarihiBitis">
+                            </div>
+                            <div>
+                                <label for="talepDurumuFiltre">Talep Durumu:</label>
+                                <select id="talepDurumuFiltre">
+                                    <option value="">Tümü</option>
+                                    <option value="Beklemede">Beklemede</option>
+                                    <option value="Onaylandı">Onaylandı</option>
+                                    <option value="Reddedildi">Reddedildi</option>
+                                    <option value="İptal Edildi">İptal Edildi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="paraBirimiFiltreTalep">Para Birimi:</label>
+                                <select id="paraBirimiFiltreTalep"><option value="">Tümü</option></select>
+                            </div>
+                            <div>
+                                <label for="tutarMinTalep">Tutar Aralığı:</label>
+                                <input type="number" id="tutarMinTalep" placeholder="Min"> - <input type="number" id="tutarMaxTalep" placeholder="Max">
+                            </div>
+                            <button type="submit" class="secondary-button">Filtrele</button>
+                            <button type="button" id="talepExcelAktarButton" class="secondary-button">Excel'e Aktar</button>
+                        </form>
+                    </div>
+                    <div class="list-section">
+                        <h3>Satınalma Taleplerim</h3>
+                        <table id="talepListesiTable">
+                            <thead>
+                                <tr>
+                                    <th>Talep No</th><th>Talep Tarihi</th><th>Açıklama (Kısa)</th><th>Tutar</th><th>Para Birimi</th><th>Talep Durumu</th><th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SATINALMA ONAYI FORMU BÖLÜMÜ (Onaycının talepleri gördüğü yer) -->
+                <section id="satinalmaOnayFormuBolumu" class="tab-content">
+                     <div class="filter-section">
+                        <h3>Filtrele</h3>
+                        <form id="onayFiltreForm">
+                            <div>
+                                <label for="onayTarihiBaslangic">Talep Tarihi Aralığı:</label>
+                                <input type="date" id="onayTarihiBaslangic"> - <input type="date" id="onayTarihiBitis">
+                            </div>
+                             <div>
+                                <label for="talepEdenFiltreOnay">Talep Eden:</label>
+                                <select id="talepEdenFiltreOnay"><option value="">Tümü</option></select>
+                            </div>
+                            <div>
+                                <label for="onayDurumuFiltre">Talep Durumu:</label>
+                                <select id="onayDurumuFiltre">
+                                    <option value="">Tümü</option>
+                                    <option value="Beklemede" selected>Beklemede</option>
+                                    <option value="Onaylandı">Onaylandı</option>
+                                    <option value="Reddedildi">Reddedildi</option>
+                                    <option value="İptal Edildi">İptal Edildi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="paraBirimiFiltreOnay">Para Birimi:</label>
+                                <select id="paraBirimiFiltreOnay"><option value="">Tümü</option></select>
+                            </div>
+                            <div>
+                                <label for="tutarMinOnay">Tutar Aralığı:</label>
+                                <input type="number" id="tutarMinOnay" placeholder="Min"> - <input type="number" id="tutarMaxOnay" placeholder="Max">
+                            </div>
+                            <button type="submit" class="secondary-button">Filtrele</button>
+                            <button type="button" id="onayExcelAktarButton" class="secondary-button">Excel'e Aktar</button>
+                        </form>
+                    </div>
+                    <div class="list-section">
+                        <h3>Tüm Satınalma Talepleri (Onay Bekleyenler)</h3>
+                        <table id="onayListesiTable">
+                            <thead>
+                                <tr>
+                                    <th>Talep No</th><th>Talep Eden</th><th>Talep Tarihi</th><th>Açıklama (Kısa)</th><th>Tutar</th><th>Para Birimi</th><th>Doküman</th><th>Talep Durumu</th><th>Onay/Red Tarihi</th><th>Reddetme Sebebi</th><th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: YENİ TALEP EKLEME / GÜNCELLEME FORMU -->
+    <div id="talepFormModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3 id="modalTitle">Yeni Satın Alma Talebi Ekle</h3>
+            <form id="satinalmaTalepForm">
+                <input type="hidden" id="talepId">
+                <div><label for="talepNo">Talep No:</label><input type="text" id="talepNo" readonly></div>
+                <div><label for="talepEden">Talep Eden:</label><input type="text" id="talepEden" readonly></div>
+                <div><label for="talepTarihiModal">Talep Tarihi:</label><input type="date" id="talepTarihiModal"></div>
+                <div><label for="aciklamaModal">Açıklama:</label><textarea id="aciklamaModal" rows="5" required></textarea></div>
+                <div><label for="tutarModal">Tutar:</label><input type="number" id="tutarModal" step="0.01" required></div>
+                <div><label for="paraBirimiModal">Para Birimi:</label><select id="paraBirimiModal" required></select></div>
+                <div><label for="dokumanlarModal">Dokümanlar:</label><input type="file" id="dokumanlarModal" multiple><ul id="yuklenenDosyalarListesi"></ul></div>
+                <div><label for="talepDurumuModal">Talep Durumu:</label><input type="text" id="talepDurumuModal" readonly></div>
+                <div class="modal-buttons">
+                    <button type="submit" id="kaydetButton" class="primary-button">Kaydet</button>
+                    <button type="button" id="guncelleButtonModal" class="primary-button" style="display:none;">Güncelle</button>
+                    <button type="button" id="iptalButtonModal" class="secondary-button">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TALEP DETAY GÖRÜNTÜLEME -->
+    <div id="talepDetayModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Satınalma Talebi Detayı</h3>
+            <div id="talepDetayIcerik">
+                <p><strong>Talep No:</strong> <span id="detayTalepNo"></span></p>
+                <p><strong>Talep Eden:</strong> <span id="detayTalepEden"></span></p>
+                <p><strong>Talep Tarihi:</strong> <span id="detayTalepTarihi"></span></p>
+                <p><strong>Açıklama:</strong> <pre id="detayAciklama"></pre></p>
+                <p><strong>Tutar:</strong> <span id="detayTutar"></span> <span id="detayParaBirimi"></span></p>
+                <p><strong>Talep Durumu:</strong> <span id="detayTalepDurumu"></span></p>
+                <p><strong>Dokümanlar:</strong> <ul id="detayDokumanlarListesi"></ul></p>
+                <p id="detayOnayRedTarihiP" style="display:none;"><strong>Onay/Red Tarihi:</strong> <span id="detayOnayRedTarihi"></span></p>
+                <p id="detayRedSebebiP" style="display:none;"><strong>Red Sebebi:</strong> <span id="detayRedSebebi"></span></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- KULLANICI BİLGİLERİ VE MEVCUT KULLANICI ---
+            const users = {
+                "talepeden": { name: "Emre Pirinç (Talep Eden)", id: "EMP001", role: "requester", password: "123" },
+                "onaylayan": { name: "Ayşe Yılmaz (Onaylayan)", id: "AY002", role: "approver", password: "123" }
+            };
+            let currentUser = null; 
+
+            // --- SİMÜLASYON VERİLERİ ---
+            let purchaseRequests = [
+                { id: 1, talepNo: "ST00001", talepEden: "Emre Pirinç (Talep Eden)", talepEdenId: "EMP001", talepTarihi: "2025-05-10", aciklama: "Ofis için yeni klavye ve mouse seti alımı.", tutar: 250.00, paraBirimi: "TRY", dokumanlar: [{name:"proforma_klavye.pdf"}], durum: "Beklemede", onayRedTarihi: null, redSebebi: null },
+                { id: 2, talepNo: "ST00002", talepEden: "Mehmet Kaya", talepEdenId: "MK003", talepTarihi: "2025-05-11", aciklama: "Pazarlama departmanı için 2 adet yeni monitör.", tutar: 1200.50, paraBirimi: "EUR", dokumanlar: [], durum: "Onaylandı", onayRedTarihi: "2025-05-12", redSebebi: null },
+                { id: 3, talepNo: "ST00003", talepEden: "Emre Pirinç (Talep Eden)", talepEdenId: "EMP001", talepTarihi: "2025-05-12", aciklama: "Yazılım lisans yenilemesi için ödeme.", tutar: 500.00, paraBirimi: "USD", dokumanlar: [{name:"lisans_teklifi.docx"}], durum: "Reddedildi", onayRedTarihi: "2025-05-13", redSebebi: "Bütçe aşımı nedeniyle reddedildi." },
+            ];
+            let nextRequestId = 4;
+            const mockCurrencies = ["TRY", "USD", "EUR", "GBP"]; 
+            let mockRequesters = [...new Set(purchaseRequests.map(req => req.talepEden))]; 
+
+            // --- DOM ELEMENTLERİ ---
+            const loginContainer = document.getElementById('loginContainer');
+            const appContainer = document.getElementById('appContainer');
+            const loginForm = document.getElementById('loginForm');
+            const loginError = document.getElementById('loginError');
+            const logoutButton = document.getElementById('logoutButton');
+            const sidebar = document.getElementById('sidebar');
+            const toggleSidebarButton = document.getElementById('toggleSidebarButton');
+            const pageTitleElement = document.getElementById('pageTitle');
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+            const submenuToggles = document.querySelectorAll('.sidebar-nav .has-submenu');
+            const currentUserDisplay = document.getElementById('currentUserDisplay');
+            const yeniTalepEkleButton = document.getElementById('yeniTalepEkleButton');
+            const talepFormModal = document.getElementById('talepFormModal');
+            const talepModalTitle = document.getElementById('modalTitle');
+            const satinalmaTalepForm = document.getElementById('satinalmaTalepForm');
+            const talepIdInput = document.getElementById('talepId');
+            const talepNoInput = document.getElementById('talepNo');
+            const talepEdenInput = document.getElementById('talepEden');
+            const talepTarihiModalInput = document.getElementById('talepTarihiModal');
+            const aciklamaModalInput = document.getElementById('aciklamaModal');
+            const tutarModalInput = document.getElementById('tutarModal');
+            const paraBirimiModalSelect = document.getElementById('paraBirimiModal');
+            const dokumanlarModalInput = document.getElementById('dokumanlarModal');
+            const yuklenenDosyalarListesi = document.getElementById('yuklenenDosyalarListesi');
+            const talepDurumuModalInput = document.getElementById('talepDurumuModal');
+            const kaydetButton = document.getElementById('kaydetButton');
+            const guncelleButtonModal = document.getElementById('guncelleButtonModal');
+            const iptalButtonModal = document.getElementById('iptalButtonModal');
+            const talepListesiTableBody = document.getElementById('talepListesiTable').getElementsByTagName('tbody')[0];
+            const talepFiltreForm = document.getElementById('talepFiltreForm');
+            const paraBirimiFiltreTalep = document.getElementById('paraBirimiFiltreTalep');
+            const onayListesiTableBody = document.getElementById('onayListesiTable').getElementsByTagName('tbody')[0];
+            const onayFiltreForm = document.getElementById('onayFiltreForm');
+            const paraBirimiFiltreOnay = document.getElementById('paraBirimiFiltreOnay');
+            const talepEdenFiltreOnay = document.getElementById('talepEdenFiltreOnay');
+            const onayDurumuFiltreSelect = document.getElementById('onayDurumuFiltre');
+            const talepDetayModal = document.getElementById('talepDetayModal');
+            const modalCloseButtons = document.querySelectorAll('.modal .close-button');
+            const detayTalepNo = document.getElementById('detayTalepNo');
+            const detayTalepEden = document.getElementById('detayTalepEden');
+            const detayTalepTarihi = document.getElementById('detayTalepTarihi');
+            const detayAciklama = document.getElementById('detayAciklama');
+            const detayTutar = document.getElementById('detayTutar');
+            const detayParaBirimi = document.getElementById('detayParaBirimi');
+            const detayTalepDurumu = document.getElementById('detayTalepDurumu');
+            const detayDokumanlarListesi = document.getElementById('detayDokumanlarListesi');
+            const detayOnayRedTarihiP = document.getElementById('detayOnayRedTarihiP');
+            const detayOnayRedTarihi = document.getElementById('detayOnayRedTarihi');
+            const detayRedSebebiP = document.getElementById('detayRedSebebiP');
+            const detayRedSebebi = document.getElementById('detayRedSebebi');
+
+            // --- YARDIMCI FONKSİYONLAR ---
+            function formatDate(dateString) {
+                if (!dateString) return "";
+                const date = new Date(dateString);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}.${month}.${year}`;
+            }
+            function getCurrentDateString() {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            function showNotification(message, type = "success") {
+                alert((type === "success" ? "Başarılı: " : "Hata: ") + message);
+            }
+            function sendEmailNotification(type, requestData) {
+                console.log(`E-POSTA GÖNDERİLİYOR (Simülasyon):`);
+                console.log(`  Tür: ${type}`);
+                console.log(`  Talep No: ${requestData.talepNo}`);
+                console.log(`  Talep Eden: ${requestData.talepEden}`);
+                if (type === "Yeni Talep Oluşturulduğunda") {
+                    console.log(`  Kime: Satınalma Onay Yetkilileri`);
+                    console.log(`  Konu: Yeni Satınalma Talebi Onayınızı Bekliyor`);
+                } else if (type === "Talep Onaylandığında") {
+                    console.log(`  Kime: ${requestData.talepEden}`);
+                    console.log(`  Konu: Satınalma Talebiniz Onaylandı`);
+                } else if (type === "Talep Reddedildiğinde") {
+                    console.log(`  Kime: ${requestData.talepEden}`);
+                    console.log(`  Konu: Satınalma Talebiniz Reddedildi`);
+                    console.log(`  Red Sebebi: ${requestData.redSebebi}`);
+                }
+            }
+
+            // --- GİRİŞ VE ÇIKIŞ FONKSİYONLARI ---
+            function handleLogin(event) {
+                event.preventDefault();
+                const username = loginForm.username.value;
+                const password = loginForm.password.value;
+                const user = users[username];
+                if (user && user.password === password) {
+                    currentUser = user;
+                    loginContainer.style.display = 'none';
+                    appContainer.style.display = 'flex';
+                    loginError.style.display = 'none';
+                    loginForm.reset();
+                    initializePortal();
+                } else {
+                    loginError.style.display = 'block';
+                }
+            }
+            function handleLogout() {
+                currentUser = null;
+                appContainer.style.display = 'none';
+                loginContainer.style.display = 'flex';
+                if(pageTitleElement) pageTitleElement.textContent = "ZWILLING Portal"; 
+                if(currentUserDisplay) currentUserDisplay.textContent = "";
+            }
+            function initializePortal() {
+                if (!currentUser) return;
+                updateCurrentUserDisplay();
+                applyUserRolePermissions();
+                let defaultNavItem;
+                if (currentUser.role === 'requester') {
+                    defaultNavItem = document.getElementById('navSatinalmaTalepFormu');
+                } else if (currentUser.role === 'approver') {
+                    defaultNavItem = document.getElementById('navSatinalmaOnayiFormu');
+                    if (onayDurumuFiltreSelect) onayDurumuFiltreSelect.value = "Beklemede";
+                } else {
+                    defaultNavItem = document.getElementById('navAnasayfa');
+                }
+                if (defaultNavItem && defaultNavItem.dataset.section) {
+                    setActiveSection(defaultNavItem.dataset.section, defaultNavItem);
+                } else if (document.getElementById('navAnasayfa')) {
+                    setActiveSection('anasayfaBolumu', document.getElementById('navAnasayfa'));
+                }
+            }
+            function updateCurrentUserDisplay() {
+                if (currentUserDisplay && currentUser) {
+                    currentUserDisplay.textContent = `${currentUser.name}`;
+                } else if (currentUserDisplay) {
+                    currentUserDisplay.textContent = '';
+                }
+            }
+
+            // --- NAVİGASYON VE YETKİLENDİRME ---
+            function updatePageTitle(title) {
+                if (pageTitleElement) pageTitleElement.textContent = title;
+            }
+            function setActiveSection(sectionId, clickedItem) {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => item.classList.remove('active-item'));
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.classList.add('active');
+                    updatePageTitle(clickedItem.dataset.title || "ZWILLING Portal");
+                }
+                if (clickedItem) {
+                    clickedItem.classList.add('active-item');
+                    const parentLi = clickedItem.closest('ul.submenu')?.parentElement;
+                    if (parentLi && parentLi.classList.contains('open') && parentLi.querySelector('a.has-submenu')) {
+                        // Açık kalmalı
+                    } else if (parentLi && parentLi.querySelector('a.has-submenu')) {
+                        parentLi.classList.add('open');
+                        parentLi.querySelector('.submenu').style.display = 'block';
+                        const arrow = parentLi.querySelector('.arrow');
+                        if(arrow) { arrow.classList.replace('right-arrow', 'down-arrow'); arrow.innerHTML = '▼';}
+                    }
+                }
+                applyUserRolePermissionsToContent();
+                renderAllLists();
+            }
+            function toggleSubmenu(event) {
+                event.preventDefault();
+                const parentLi = this.parentElement;
+                const submenu = parentLi.querySelector('.submenu');
+                const arrow = this.querySelector('.arrow');
+                if (submenu) {
+                    const isOpen = submenu.style.display === 'block';
+                    submenu.style.display = isOpen ? 'none' : 'block';
+                    parentLi.classList.toggle('open', !isOpen);
+                    if(arrow) {
+                        arrow.classList.toggle('down-arrow', !isOpen);
+                        arrow.classList.toggle('right-arrow', isOpen);
+                        arrow.innerHTML = !isOpen ? '▼' : '›';
+                    }
+                }
+            }
+            function applyUserRolePermissions() {
+                if (!currentUser) return;
+                const menuTalepFormuLi = document.getElementById('menuSatinalmaTalepFormuLi');
+                const menuOnayiFormuLi = document.getElementById('menuSatinalmaOnayiFormuLi');
+                const menuSatinalmaOnayMevcutLi = document.getElementById('menuSatinalmaOnayMevcutLi');
+                const satinalmaMenuLi = document.getElementById('satinalmaMenuLi');
+                [menuTalepFormuLi, menuOnayiFormuLi, menuSatinalmaOnayMevcutLi, satinalmaMenuLi].forEach(el => {
+                    if(el) el.style.display = 'list-item'; 
+                });
+
+                if (currentUser.role === 'requester') {
+                    if (menuOnayiFormuLi) menuOnayiFormuLi.style.display = 'none';
+                } else if (currentUser.role === 'approver') {
+                    // Onaycı her şeyi görür
+                } else { 
+                   [menuTalepFormuLi, menuOnayiFormuLi, menuSatinalmaOnayMevcutLi, satinalmaMenuLi].forEach(el => {
+                        if(el) el.style.display = 'none';
+                    });
+                }
+                const satinalmaSubmenu = document.getElementById('satinalmaSubmenu');
+                if (satinalmaSubmenu) {
+                    const visibleItems = Array.from(satinalmaSubmenu.querySelectorAll('li')).filter(li => li.style.display !== 'none');
+                    if (visibleItems.length === 0 && satinalmaMenuLi) {
+                        satinalmaMenuLi.style.display = 'none';
+                    } else if (satinalmaMenuLi) {
+                         satinalmaMenuLi.style.display = 'list-item';
+                    }
+                }
+                applyUserRolePermissionsToContent();
+            }
+            function applyUserRolePermissionsToContent() {
+                if (!currentUser) return;
+                const talepFormuAktif = document.getElementById('satinalmaTalepFormuBolumu')?.classList.contains('active');
+                if (yeniTalepEkleButton) {
+                    if (talepFormuAktif && (currentUser.role === 'requester' || currentUser.role === 'approver')) {
+                        yeniTalepEkleButton.style.display = 'block';
+                    } else {
+                        yeniTalepEkleButton.style.display = 'none';
+                    }
+                }
+            }
+
+            // --- DROPDOWN VE FİLTRE AYARLARI ---
+            function populateCurrencyDropdowns() {
+                const selectsToPopulate = [paraBirimiModalSelect, paraBirimiFiltreTalep, paraBirimiFiltreOnay];
+                selectsToPopulate.forEach(select => {
+                    if (!select) return;
+                    let firstOption = null;
+                    if (select.options.length > 0 && (select.options[0].value === "" || select.options[0].value === null)) {
+                        firstOption = select.options[0];
+                    }
+                    select.innerHTML = '';
+                    if (firstOption) select.add(firstOption);
+                    mockCurrencies.forEach(currency => {
+                        const option = document.createElement('option');
+                        option.value = currency; option.textContent = currency;
+                        select.appendChild(option);
+                    });
+                });
+            }
+            function populateRequesterDropdown() {
+                if (!talepEdenFiltreOnay) return;
+                const firstOption = talepEdenFiltreOnay.options[0] && talepEdenFiltreOnay.options[0].value === "" ? talepEdenFiltreOnay.options[0] : null;
+                talepEdenFiltreOnay.innerHTML = '';
+                if(firstOption) talepEdenFiltreOnay.add(firstOption);
+                mockRequesters.forEach(requester => { 
+                    const option = document.createElement('option');
+                    option.value = requester; option.textContent = requester;
+                    talepEdenFiltreOnay.appendChild(option);
+                });
+            }
+            function setDefaultFilterDates() {
+                const today = new Date();
+                const oneWeekAgo = new Date(today); oneWeekAgo.setDate(today.getDate() - 7);
+                const todayStr = today.toISOString().split('T')[0];
+                const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
+                [document.getElementById('talepTarihiBaslangic'), document.getElementById('onayTarihiBaslangic')].forEach(el => { if(el) el.value = oneWeekAgoStr; });
+                [document.getElementById('talepTarihiBitis'), document.getElementById('onayTarihiBitis')].forEach(el => { if(el) el.value = todayStr; });
+            }
+
+            // --- TALEP İŞLEMLERİ ---
+            function openTalepFormModal(requestId = null) {
+                if (!currentUser) return; 
+                satinalmaTalepForm.reset();
+                yuklenenDosyalarListesi.innerHTML = '';
+                dokumanlarModalInput.value = ''; 
+                if (requestId) { 
+                    const request = purchaseRequests.find(r => r.id === requestId);
+                    if (!request) { showNotification("Talep bulunamadı.", "error"); return; }
+                    if (request.talepEdenId !== currentUser.id) { showNotification("Bu talebi güncelleme yetkiniz yok.", "error"); return; }
+                    if (request.durum !== "Reddedildi"){ showNotification("Sadece 'Reddedildi' durumundaki talepler güncellenebilir.", "error"); return; }
+                    talepModalTitle.textContent = "Satın Alma Talebini Güncelle";
+                    talepIdInput.value = request.id;
+                    talepNoInput.value = request.talepNo;
+                    talepEdenInput.value = request.talepEden; 
+                    talepTarihiModalInput.value = request.talepTarihi;
+                    aciklamaModalInput.value = request.aciklama;
+                    tutarModalInput.value = request.tutar;
+                    if (paraBirimiModalSelect) { paraBirimiModalSelect.value = request.paraBirimi; }
+                    talepDurumuModalInput.value = request.durum; 
+                    request.dokumanlar.forEach(doc => { const li = document.createElement('li'); li.textContent = doc.name; yuklenenDosyalarListesi.appendChild(li); });
+                    kaydetButton.style.display = 'none';
+                    guncelleButtonModal.style.display = 'inline-block';
+                } else { 
+                    talepModalTitle.textContent = "Yeni Satın Alma Talebi Ekle";
+                    talepIdInput.value = '';
+                    talepNoInput.value = `ST${String(nextRequestId).padStart(5, '0')}`;
+                    talepEdenInput.value = currentUser.name; 
+                    talepTarihiModalInput.value = getCurrentDateString(); 
+                    talepDurumuModalInput.value = "Beklemede";
+                    if(paraBirimiModalSelect && mockCurrencies.length > 0) { paraBirimiModalSelect.value = mockCurrencies[0]; }
+                    kaydetButton.style.display = 'inline-block';
+                    guncelleButtonModal.style.display = 'none';
+                }
+                talepFormModal.style.display = 'block';
+            }
+            function closeTalepFormModal() { if(talepFormModal) talepFormModal.style.display = 'none'; }
+            function saveTalep() {
+                if (!currentUser) return;
+                if (!satinalmaTalepForm.checkValidity()) { satinalmaTalepForm.reportValidity(); return; }
+                const newFiles = Array.from(dokumanlarModalInput.files).map(file => ({ name: file.name }));
+                const newRequest = {
+                    id: nextRequestId, talepNo: talepNoInput.value, talepEden: currentUser.name, talepEdenId: currentUser.id,
+                    talepTarihi: talepTarihiModalInput.value, aciklama: aciklamaModalInput.value, tutar: parseFloat(tutarModalInput.value),
+                    paraBirimi: paraBirimiModalSelect.value, dokumanlar: newFiles, durum: "Beklemede", onayRedTarihi: null, redSebebi: null
+                };
+                purchaseRequests.push(newRequest);
+                nextRequestId++;
+                if (!mockRequesters.includes(currentUser.name)) { 
+                    mockRequesters.push(currentUser.name);
+                    populateRequesterDropdown(); 
+                }
+                showNotification("Satınalma talebi başarıyla oluşturuldu.");
+                sendEmailNotification("Yeni Talep Oluşturulduğunda", newRequest);
+                renderAllLists();
+                closeTalepFormModal();
+            }
+            function updateTalep() {
+                if (!currentUser) return;
+                if (!satinalmaTalepForm.checkValidity()) { satinalmaTalepForm.reportValidity(); return; }
+                const requestId = parseInt(talepIdInput.value);
+                const requestIndex = purchaseRequests.findIndex(r => r.id === requestId && r.talepEdenId === currentUser.id);
+                if (requestIndex === -1) { showNotification("Talep bulunamadı veya güncelleme yetkiniz yok.", "error"); return; }
+                if(purchaseRequests[requestIndex].durum !== "Reddedildi"){ showNotification("Sadece 'Reddedildi' durumundaki talepler güncellenebilir.", "error"); return; }
+                const existingRequest = purchaseRequests[requestIndex];
+                const newFiles = Array.from(dokumanlarModalInput.files).map(file => ({ name: file.name }));
+                const updatedDokumanlar = newFiles.length > 0 ? newFiles : existingRequest.dokumanlar;
+                purchaseRequests[requestIndex] = {
+                    ...existingRequest, talepTarihi: talepTarihiModalInput.value, aciklama: aciklamaModalInput.value,
+                    tutar: parseFloat(tutarModalInput.value), paraBirimi: paraBirimiModalSelect.value, dokumanlar: updatedDokumanlar,
+                    durum: "Beklemede"
+                };
+                showNotification("Satınalma talebi güncellenmiştir.");
+                sendEmailNotification("Talep Güncellendiğinde (Onaya Tekrar Sunuldu)", purchaseRequests[requestIndex]);
+                renderAllLists();
+                closeTalepFormModal();
+            }
+            function cancelTalepInList(requestId) {
+                if (!currentUser) return;
+                const requestIndex = purchaseRequests.findIndex(r => r.id === requestId);
+                if (requestIndex === -1) { showNotification("İptal edilecek talep bulunamadı.", "error"); return; }
+                const requestToCancel = purchaseRequests[requestIndex];
+                if (requestToCancel.talepEdenId !== currentUser.id) { showNotification("Bu talebi iptal etme yetkiniz yok.", "error"); return; }
+                if (requestToCancel.durum !== "Beklemede") { showNotification("Sadece 'Beklemede' durumundaki talepler iptal edilebilir.", "error"); return; }
+                if (!confirm("Bu talebi iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) return;
+                purchaseRequests[requestIndex].durum = "İptal Edildi";
+                showNotification("Satınalma talebi başarıyla iptal edildi.");
+                renderAllLists();
+            }
+            function getTalepFilters() {
+                return {
+                    baslangicTarihi: document.getElementById('talepTarihiBaslangic')?.value,
+                    bitisTarihi: document.getElementById('talepTarihiBitis')?.value,
+                    durum: document.getElementById('talepDurumuFiltre')?.value,
+                    paraBirimi: document.getElementById('paraBirimiFiltreTalep')?.value,
+                    minTutar: parseFloat(document.getElementById('tutarMinTalep')?.value) || null,
+                    maxTutar: parseFloat(document.getElementById('tutarMaxTalep')?.value) || null
+                };
+            }
+            function renderTalepListesi() {
+                if (!talepListesiTableBody || !currentUser) { if(talepListesiTableBody) talepListesiTableBody.innerHTML = ''; return; }
+                talepListesiTableBody.innerHTML = '';
+                const filters = getTalepFilters();
+                const filteredRequests = purchaseRequests.filter(req => {
+                    let match = req.talepEdenId === currentUser.id;
+                    if (filters.baslangicTarihi && req.talepTarihi) match = match && new Date(req.talepTarihi) >= new Date(filters.baslangicTarihi);
+                    if (filters.bitisTarihi && req.talepTarihi) match = match && new Date(req.talepTarihi) <= new Date(filters.bitisTarihi);
+                    if (filters.durum) match = match && req.durum === filters.durum;
+                    if (filters.paraBirimi) match = match && req.paraBirimi === filters.paraBirimi;
+                    if (filters.minTutar !== null) match = match && req.tutar >= filters.minTutar;
+                    if (filters.maxTutar !== null) match = match && req.tutar <= filters.maxTutar;
+                    return match;
+                });
+                filteredRequests.forEach(req => {
+                    const row = talepListesiTableBody.insertRow();
+                    row.insertCell().textContent = req.talepNo;
+                    row.insertCell().textContent = formatDate(req.talepTarihi);
+                    row.insertCell().textContent = req.aciklama.length > 50 ? req.aciklama.substring(0, 50) + "..." : req.aciklama;
+                    row.insertCell().textContent = req.tutar.toFixed(2);
+                    row.insertCell().textContent = req.paraBirimi;
+                    row.insertCell().textContent = req.durum;
+                    const actionsCell = row.insertCell();
+                    if (req.durum === "Beklemede" && req.talepEdenId === currentUser.id) {
+                        const iptalEtButton = document.createElement('button');
+                        iptalEtButton.textContent = "İptal Et";
+                        iptalEtButton.classList.add('action-button', 'cancel-list-button');
+                        iptalEtButton.onclick = function() { cancelTalepInList(req.id); };
+                        actionsCell.appendChild(iptalEtButton);
+                    } else if (req.durum === "Reddedildi" && req.talepEdenId === currentUser.id) {
+                        const guncelleButton = document.createElement('button');
+                        guncelleButton.textContent = "Güncelle";
+                        guncelleButton.classList.add('action-button', 'update-button');
+                        guncelleButton.onclick = function() { openTalepFormModal(req.id); };
+                        actionsCell.appendChild(guncelleButton);
+                    }
+                    row.onclick = (e) => { if (e.target.tagName.toLowerCase() !== 'button' && e.target.parentElement.tagName.toLowerCase() !== 'button') openDetayModal(req.id); };
+                });
+            }
+
+            // --- ONAY İŞLEMLERİ ---
+            function approveRequest(requestId) {
+                if (!currentUser || currentUser.role !== 'approver') return;
+                const requestIndex = purchaseRequests.findIndex(r => r.id === requestId);
+                if (requestIndex > -1 && purchaseRequests[requestIndex].durum === "Beklemede") {
+                    purchaseRequests[requestIndex].durum = "Onaylandı";
+                    purchaseRequests[requestIndex].onayRedTarihi = getCurrentDateString();
+                    showNotification(`'${purchaseRequests[requestIndex].talepNo}' numaralı talep onaylandı.`);
+                    sendEmailNotification("Talep Onaylandığında", purchaseRequests[requestIndex]);
+                    renderAllLists();
+                }
+            }
+            function rejectRequest(requestId) {
+                if (!currentUser || currentUser.role !== 'approver') return;
+                const redSebebi = prompt("Lütfen reddetme sebebini giriniz:");
+                if (redSebebi === null) return;
+                if (redSebebi.trim() === "") { showNotification("Reddetme sebebi boş bırakılamaz.", "error"); return; }
+                const requestIndex = purchaseRequests.findIndex(r => r.id === requestId);
+                if (requestIndex > -1 && purchaseRequests[requestIndex].durum === "Beklemede") {
+                    purchaseRequests[requestIndex].durum = "Reddedildi";
+                    purchaseRequests[requestIndex].onayRedTarihi = getCurrentDateString();
+                    purchaseRequests[requestIndex].redSebebi = redSebebi;
+                    showNotification(`'${purchaseRequests[requestIndex].talepNo}' numaralı talep reddedildi.`);
+                    sendEmailNotification("Talep Reddedildiğinde", purchaseRequests[requestIndex]);
+                    renderAllLists();
+                }
+            }
+            function getOnayFilters() {
+                 return {
+                    baslangicTarihi: document.getElementById('onayTarihiBaslangic')?.value,
+                    bitisTarihi: document.getElementById('onayTarihiBitis')?.value,
+                    talepEden: document.getElementById('talepEdenFiltreOnay')?.value,
+                    durum: document.getElementById('onayDurumuFiltre')?.value,
+                    paraBirimi: document.getElementById('paraBirimiFiltreOnay')?.value,
+                    minTutar: parseFloat(document.getElementById('tutarMinOnay')?.value) || null,
+                    maxTutar: parseFloat(document.getElementById('tutarMaxOnay')?.value) || null
+                };
+            }
+            function renderOnayListesi() {
+                if (!onayListesiTableBody || !currentUser) { if(onayListesiTableBody) onayListesiTableBody.innerHTML = ''; return; }
+                onayListesiTableBody.innerHTML = '';
+                if (currentUser.role !== 'approver') { 
+                    onayListesiTableBody.innerHTML = '<tr><td colspan="11">Bu alanı görüntüleme yetkiniz yok.</td></tr>';
+                    return;
+                }
+                const filters = getOnayFilters();
+                const filteredRequests = purchaseRequests.filter(req => {
+                    let match = true; 
+                    if (filters.baslangicTarihi && req.talepTarihi) match = match && new Date(req.talepTarihi) >= new Date(filters.baslangicTarihi);
+                    if (filters.bitisTarihi && req.talepTarihi) match = match && new Date(req.talepTarihi) <= new Date(filters.bitisTarihi);
+                    if (filters.talepEden) match = match && req.talepEden === filters.talepEden;
+                    if (filters.durum) match = match && req.durum === filters.durum;
+                    if (filters.paraBirimi) match = match && req.paraBirimi === filters.paraBirimi;
+                    if (filters.minTutar !== null) match = match && req.tutar >= filters.minTutar;
+                    if (filters.maxTutar !== null) match = match && req.tutar <= filters.maxTutar;
+                    return match;
+                });
+                filteredRequests.forEach(req => {
+                    const row = onayListesiTableBody.insertRow();
+                    row.insertCell().textContent = req.talepNo;
+                    row.insertCell().textContent = req.talepEden;
+                    row.insertCell().textContent = formatDate(req.talepTarihi);
+                    row.insertCell().textContent = req.aciklama.length > 30 ? req.aciklama.substring(0, 30) + "..." : req.aciklama;
+                    row.insertCell().textContent = req.tutar.toFixed(2);
+                    row.insertCell().textContent = req.paraBirimi;
+                    row.insertCell().textContent = req.dokumanlar.length > 0 ? '📎' : '-';
+                    row.insertCell().textContent = req.durum;
+                    row.insertCell().textContent = formatDate(req.onayRedTarihi);
+                    row.insertCell().textContent = req.redSebebi || '-';
+                    const actionsCell = row.insertCell();
+                    if (req.durum === "Beklemede" && currentUser.role === 'approver') {
+                        const onaylaButton = document.createElement('button');
+                        onaylaButton.textContent = "Onayla";
+                        onaylaButton.classList.add('action-button', 'approve-button');
+                        onaylaButton.onclick = function() { approveRequest(req.id); };
+                        actionsCell.appendChild(onaylaButton);
+                        const reddetButton = document.createElement('button');
+                        reddetButton.textContent = "Reddet";
+                        reddetButton.classList.add('action-button', 'reject-button');
+                        reddetButton.onclick = function() { rejectRequest(req.id); };
+                        actionsCell.appendChild(reddetButton);
+                    }
+                    row.onclick = (e) => { if (e.target.tagName.toLowerCase() !== 'button' && e.target.parentElement.tagName.toLowerCase() !== 'button') openDetayModal(req.id);};
+                });
+            }
+
+            // --- DETAY MODAL ---
+            function openDetayModal(requestId) {
+                const request = purchaseRequests.find(r => r.id === requestId);
+                if (!request) return;
+                if(detayTalepNo) detayTalepNo.textContent = request.talepNo;
+                if(detayTalepEden) detayTalepEden.textContent = request.talepEden;
+                if(detayTalepTarihi) detayTalepTarihi.textContent = formatDate(request.talepTarihi);
+                if(detayAciklama) detayAciklama.textContent = request.aciklama;
+                if(detayTutar) detayTutar.textContent = request.tutar.toFixed(2);
+                if(detayParaBirimi) detayParaBirimi.textContent = request.paraBirimi;
+                if(detayTalepDurumu) detayTalepDurumu.textContent = request.durum;
+                if(detayDokumanlarListesi) {
+                    detayDokumanlarListesi.innerHTML = '';
+                    if (request.dokumanlar.length > 0) {
+                        request.dokumanlar.forEach(doc => { const li = document.createElement('li'); li.textContent = doc.name; detayDokumanlarListesi.appendChild(li); });
+                    } else {
+                        detayDokumanlarListesi.innerHTML = '<li>Doküman bulunmamaktadır.</li>';
+                    }
+                }
+                if (request.durum === "Onaylandı" || request.durum === "Reddedildi") {
+                    if(detayOnayRedTarihiP) detayOnayRedTarihiP.style.display = 'block';
+                    if(detayOnayRedTarihi) detayOnayRedTarihi.textContent = formatDate(request.onayRedTarihi);
+                    if (request.durum === "Reddedildi" && request.redSebebi) {
+                        if(detayRedSebebiP) detayRedSebebiP.style.display = 'block';
+                        if(detayRedSebebi) detayRedSebebi.textContent = request.redSebebi;
+                    } else {
+                        if(detayRedSebebiP) detayRedSebebiP.style.display = 'none';
+                    }
+                } else {
+                    if(detayOnayRedTarihiP) detayOnayRedTarihiP.style.display = 'none';
+                    if(detayRedSebebiP) detayRedSebebiP.style.display = 'none';
+                }
+                if(talepDetayModal) talepDetayModal.style.display = 'block';
+            }
+            function closeDetayModal() { if(talepDetayModal) talepDetayModal.style.display = 'none'; }
+
+            // --- TÜM LİSTELERİ YENİLEME ---
+            function renderAllLists() {
+                if (!currentUser) return;
+                const talepFormuBolumu = document.getElementById('satinalmaTalepFormuBolumu');
+                const onayFormuBolumu = document.getElementById('satinalmaOnayFormuBolumu');
+                if (talepFormuBolumu?.classList.contains('active')) renderTalepListesi();
+                if (onayFormuBolumu?.classList.contains('active')) renderOnayListesi();
+            }
+
+            // --- EVENT LISTENERS ---
+            if (loginForm) loginForm.addEventListener('submit', handleLogin);
+            if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+            navItems.forEach(item => {
+                if (!item.classList.contains('has-submenu')) {
+                    item.addEventListener('click', (e) => { e.preventDefault(); const sectionId = item.dataset.section; if (sectionId && currentUser) setActiveSection(sectionId, item); });
+                }
+            });
+            submenuToggles.forEach(toggle => { toggle.addEventListener('click', toggleSubmenu); });
+            if (toggleSidebarButton) toggleSidebarButton.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+            if (yeniTalepEkleButton) yeniTalepEkleButton.addEventListener('click', () => openTalepFormModal());
+            modalCloseButtons.forEach(button => {
+                button.onclick = function() { const modal = this.closest('.modal'); if (modal?.id === 'talepFormModal') closeTalepFormModal(); else if (modal?.id === 'talepDetayModal') closeDetayModal(); }
+            });
+            window.onclick = function(event) { if (event.target == talepFormModal) closeTalepFormModal(); if (event.target == talepDetayModal) closeDetayModal(); };
+            if (satinalmaTalepForm) satinalmaTalepForm.addEventListener('submit', (e) => e.preventDefault()); 
+            if (kaydetButton) kaydetButton.addEventListener('click', saveTalep);
+            if (guncelleButtonModal) guncelleButtonModal.addEventListener('click', updateTalep);
+            if (iptalButtonModal) iptalButtonModal.addEventListener('click', () => { if (confirm("Değişiklikler kaydedilmeyecektir. Devam etmek istiyor musunuz?")) closeTalepFormModal(); });
+            if (dokumanlarModalInput) dokumanlarModalInput.addEventListener('change', () => { yuklenenDosyalarListesi.innerHTML = ''; Array.from(dokumanlarModalInput.files).forEach(file => { const li = document.createElement('li'); li.textContent = file.name; yuklenenDosyalarListesi.appendChild(li); }); });
+            if (talepFiltreForm) talepFiltreForm.addEventListener('submit', (e) => { e.preventDefault(); renderTalepListesi(); });
+            if (onayFiltreForm) onayFiltreForm.addEventListener('submit', (e) => { e.preventDefault(); renderOnayListesi(); });
+            document.getElementById('talepExcelAktarButton')?.addEventListener('click', () => console.log("Talep Listesi Excel'e aktarılacak."));
+            document.getElementById('onayExcelAktarButton')?.addEventListener('click', () => console.log("Onay Listesi Excel'e aktarılacak."));
+
+            // --- BAŞLANGIÇ AYARLARI ---
+            populateCurrencyDropdowns(); 
+            populateRequesterDropdown();
+            setDefaultFilterDates();
+        });
+    </script>
+</body>
+</html>
